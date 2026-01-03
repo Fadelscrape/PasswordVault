@@ -192,7 +192,6 @@ def afficher_style_mobile(data):
 # Suppression (par site OU identifiant)
 # =====================================================
 def supprimer_compte(data):
-    st.markdown("### ❌ Supprimer un compte")
 
     site_supprimer = st.text_input("Nom du site à supprimer (optionnel)")
     identifiant_supprimer = st.text_input("Identifiant à supprimer (optionnel)")
@@ -215,11 +214,22 @@ def supprimer_compte(data):
         if supprimes:
             storage.sauvegarder_donnees(nouveaux)
             for c in supprimes:
-                # ✅ Message clair avec site et identifiant
                 st.success(f"Le site **{c['site']}** avec l’identifiant **{c['identifiant']}** a été supprimé ✅")
             st.rerun()
         else:
             st.warning("Aucun compte correspondant trouvé.")
+
+
+# =====================================================
+# Suppression TOTALE
+# =====================================================
+def supprimer_tous_comptes(data):
+    st.markdown("### ⚠️ Supprimer TOUS les comptes")
+
+    if st.button("🗑️ Supprimer tout"):
+        storage.sauvegarder_donnees([])  # on vide la base
+        st.success("Tous les comptes ont été supprimés ✅")
+        st.rerun()
 
 
 # =====================================================

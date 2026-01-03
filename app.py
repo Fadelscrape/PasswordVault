@@ -6,9 +6,10 @@ import pandas as pd
 # --- Configuration de la page ---
 st.set_page_config(page_title="PasswordVault", page_icon="🔐", layout="wide")
 
-# --- CSS personnalisé ---
+# --- CSS responsive ---
 custom_css = """
 <style>
+/* Sidebar style */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #1a73e8 0%, #0c47a1 100%);
     color: white;
@@ -40,6 +41,19 @@ custom_css = """
     color: #1a73e8 !important;
     font-weight: 700;
 }
+
+/* Responsive table for mobile */
+@media (max-width: 768px) {
+    table {
+        font-size: 14px;
+    }
+    th, td {
+        padding: 6px;
+    }
+    [data-testid="stSidebar"] {
+        display: none; /* cacher la sidebar sur mobile */
+    }
+}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -55,13 +69,20 @@ except Exception as e:
     st.error(f"Erreur lors du chargement des données : {e}")
     data = []
 
-# --- Sidebar navigation ---
-st.sidebar.title("🔐 PasswordVault")
-st.sidebar.markdown("**Menu principal**")
-menu = st.sidebar.radio(
-    "📂 Choisissez une page :",
-    ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"]
-)
+# --- Sidebar navigation (desktop uniquement) ---
+if st.session_state.get("is_mobile", False) is False:
+    st.sidebar.title("🔐 PasswordVault")
+    st.sidebar.markdown("**Menu principal**")
+    menu = st.sidebar.radio(
+        "📂 Choisissez une page :",
+        ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"]
+    )
+else:
+    # Sur mobile, menu en haut
+    menu = st.selectbox(
+        "📂 Choisissez une page :",
+        ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"]
+    )
 
 # --- Pages ---
 if menu == "Accueil":
@@ -75,17 +96,14 @@ if menu == "Accueil":
         st.subheader("📊 Derniers comptes ajoutés")
         derniers = data[-5:] if len(data) > 5 else data
 
-        # --- état global pour afficher/masquer ---
         if "show_home_pwds" not in st.session_state:
             st.session_state["show_home_pwds"] = False
 
-        # bouton global
         eye_icon = "🙈 Masquer tous" if st.session_state["show_home_pwds"] else "👁️ Afficher tous"
         if st.button(eye_icon, key="toggle_home_pwds"):
             st.session_state["show_home_pwds"] = not st.session_state["show_home_pwds"]
             st.rerun()
 
-        # construire le tableau
         comptes_affiches = []
         for compte in derniers:
             mot_de_passe = (
@@ -101,32 +119,36 @@ if menu == "Accueil":
 
         df = pd.DataFrame(comptes_affiches)
 
-        # --- Style du tableau ---
-        table_style = """
-        <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #1a73e8;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        </style>
-        """
-        st.markdown(table_style, unsafe_allow_html=True)
-        st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
+        # --- Desktop : tableau HTML ---
+        if not st.session_state.get("is_mobile", False):
+            table_style = """
+            <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: #1a73e8;
+                color: white;
+            }
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            tr:hover {
+                background-color: #f1f1f1;
+            }
+            </style>
+            """
+            st.markdown(table_style, unsafe_allow_html=True)
+            st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
+        else:
+            # --- Mobile : affichage style carte ---
+            ui_helpers.afficher_style_mobile(derniers)
     else:
         st.info("Aucun compte enregistré pour le moment.")
 
@@ -136,7 +158,10 @@ elif menu == "Ajouter":
 
 elif menu == "Lister":
     st.header("📋 Comptes enregistrés")
-    ui_helpers.afficher_comptes(data)
+    if st.session_state.get("is_mobile", False):
+        ui_helpers.afficher_style_mobile(data)
+    else:
+        ui_helpers.afficher_comptes(data)
 
 elif menu == "Recherche":
     st.header("🔎 Rechercher un compte")
