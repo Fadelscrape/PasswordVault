@@ -9,89 +9,36 @@ st.set_page_config(page_title="PasswordVault", page_icon="🔐", layout="wide")
 # --- CSS personnalisé ---
 custom_css = """
 <style>
-body {
-    background-color: #f5f7fa;
-    font-family: 'Segoe UI', sans-serif;
-    color: #2c3e50;
-}
-h1, h2, h3 {
-    color: #1a73e8;
-    font-weight: 600;
-}
-.stButton>button {
-    background-color: #1a73e8;
-    color: white;
-    border-radius: 8px;
-    border: none;
-    padding: 0.6em 1.2em;
-    font-size: 16px;
-    font-weight: 500;
-    transition: 0.3s;
-}
-.stButton>button:hover {
-    background-color: #0c47a1;
-    transform: scale(1.05);
-}
-.stDataFrame, .stTable {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-}
-thead tr {
-    background-color: #1a73e8;
-    color: white;
-    font-weight: bold;
-}
-tbody tr:nth-child(even) {
-    background-color: #f2f6fc;
-}
-tbody tr:hover {
-    background-color: #eaf1fb;
-}
-.stAlert {
-    border-radius: 8px;
-    padding: 0.8em;
-    font-weight: 500;
-}
-
-/* --- Sidebar premium --- */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #1a73e8 0%, #0c47a1 100%);
     color: white;
     padding: 1.5em 1em;
 }
-[data-testid="stSidebar"] h1, 
-[data-testid="stSidebar"] h2, 
-[data-testid="stSidebar"] h3 {
-    color: #ffffff !important;
-    font-weight: 600;
+[data-testid="stSidebar"] .stRadio > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
 }
-[data-testid="stSidebar"] .stRadio > label {
+[data-testid="stSidebar"] .stRadio label {
+    background: rgba(255,255,255,0.15);
     color: #ffffff !important;
+    padding: 0.8em 1em;
+    border-radius: 10px;
     font-size: 16px;
-    font-weight: 500;
-}
-[data-testid="stSidebar"] .stButton>button {
-    background-color: #ffffff;
-    color: #1a73e8;
-    border-radius: 8px;
-    border: none;
-    padding: 0.5em 1em;
-    font-size: 14px;
     font-weight: 600;
+    cursor: pointer;
     transition: 0.3s;
+    width: 100%;
+    text-align: center;
 }
-[data-testid="stSidebar"] .stButton>button:hover {
-    background-color: #f2f6fc;
-    color: #0c47a1;
-    transform: scale(1.05);
+[data-testid="stSidebar"] .stRadio label:hover {
+    background: rgba(255,255,255,0.35);
+    transform: scale(1.02);
 }
-[data-testid="stSidebar"] hr {
-    border: 1px solid #ffffff33;
-}
-[data-testid="stSidebar"] p {
-    color: #eaf1fb !important;
-    font-size: 14px;
+[data-testid="stSidebar"] .stRadio input:checked + div label {
+    background: #ffffff !important;
+    color: #1a73e8 !important;
+    font-weight: 700;
 }
 </style>
 """
@@ -111,29 +58,75 @@ except Exception as e:
 # --- Sidebar navigation ---
 st.sidebar.title("🔐 PasswordVault")
 st.sidebar.markdown("**Menu principal**")
-menu = st.sidebar.radio("📂 Choisissez une page :", ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"])
+menu = st.sidebar.radio(
+    "📂 Choisissez une page :",
+    ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"]
+)
 
 # --- Pages ---
 if menu == "Accueil":
     st.title("🔐 PasswordVault")
     st.markdown("Bienvenue dans votre coffre-fort numérique sécurisé. Gérez vos identifiants en toute simplicité.")
 
-    # --- Mini tableau de bord ---
     total_comptes = len(data)
     st.metric(label="Nombre total de comptes", value=total_comptes)
 
     if data:
         st.subheader("📊 Derniers comptes ajoutés")
         derniers = data[-5:] if len(data) > 5 else data
+
+        # --- état global pour afficher/masquer ---
+        if "show_home_pwds" not in st.session_state:
+            st.session_state["show_home_pwds"] = False
+
+        # bouton global
+        eye_icon = "🙈 Masquer tous" if st.session_state["show_home_pwds"] else "👁️ Afficher tous"
+        if st.button(eye_icon, key="toggle_home_pwds"):
+            st.session_state["show_home_pwds"] = not st.session_state["show_home_pwds"]
+            st.rerun()
+
+        # construire le tableau
         comptes_affiches = []
         for compte in derniers:
+            mot_de_passe = (
+                security.dechiffrer(compte["mot_de_passe"])
+                if st.session_state["show_home_pwds"]
+                else "********"
+            )
             comptes_affiches.append({
                 "Site": compte["site"],
                 "Identifiant": compte["identifiant"],
-                "Mot de passe": security.dechiffrer(compte["mot_de_passe"])
+                "Mot de passe": mot_de_passe
             })
+
         df = pd.DataFrame(comptes_affiches)
-        st.dataframe(df, use_container_width=True)
+
+        # --- Style du tableau ---
+        table_style = """
+        <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #1a73e8;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        </style>
+        """
+        st.markdown(table_style, unsafe_allow_html=True)
+        st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
     else:
         st.info("Aucun compte enregistré pour le moment.")
 
