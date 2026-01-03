@@ -49,7 +49,8 @@ def formulaire_ajout(data):
                 })
 
                 storage.sauvegarder_donnees(data)
-                st.success(f"Compte **{domaine}** ajouté avec succès ✅")
+                # ✅ Confirmation explicite
+                st.success(f"✅ Le site **{domaine}** avec l’identifiant **{identifiant}** a été ajouté avec succès.")
                 st.rerun()
             else:
                 st.warning("Veuillez remplir tous les champs.")
@@ -59,7 +60,7 @@ def formulaire_ajout(data):
 # Recherche
 # =====================================================
 def rechercher_compte(data):
-    site_recherche = st.text_input("🔎 Rechercher un site")
+    site_recherche = st.text_input("Nom du site")
 
     if site_recherche:
         domaine = normaliser_site(site_recherche)
@@ -192,7 +193,6 @@ def afficher_style_mobile(data):
 # Suppression (par site OU identifiant)
 # =====================================================
 def supprimer_compte(data):
-
     site_supprimer = st.text_input("Nom du site à supprimer (optionnel)")
     identifiant_supprimer = st.text_input("Identifiant à supprimer (optionnel)")
 
@@ -214,7 +214,8 @@ def supprimer_compte(data):
         if supprimes:
             storage.sauvegarder_donnees(nouveaux)
             for c in supprimes:
-                st.success(f"Le site **{c['site']}** avec l’identifiant **{c['identifiant']}** a été supprimé ✅")
+                # ✅ Confirmation explicite
+                st.success(f"✅ Le site **{c['site']}** avec l’identifiant **{c['identifiant']}** a été supprimé.")
             st.rerun()
         else:
             st.warning("Aucun compte correspondant trouvé.")
@@ -228,7 +229,7 @@ def supprimer_tous_comptes(data):
 
     if st.button("🗑️ Supprimer tout"):
         storage.sauvegarder_donnees([])  # on vide la base
-        st.success("Tous les comptes ont été supprimés ✅")
+        st.success("✅ Tous les comptes ont été supprimés.")
         st.rerun()
 
 

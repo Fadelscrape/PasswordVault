@@ -1,0 +1,14 @@
+[
+    {
+        "site": "facebook.com",
+        "identifiant": "fadel@gmail.com",
+        "mot_de_passe": "gAAAAABpWWRPznupXfrgnEUdKszuw3Q4O-m1SQ_tYaAAV39-pl-6SQDCi4rU-HpE8IJdFg5Wm6-Ad_C5bh2GxxJVJmgGCLEyPA==",
+        "logo": "https://www.google.com/s2/favicons?domain=facebook.com"
+    },
+    {
+        "site": "share.streamlit.io",
+        "identifiant": "eeee",
+        "mot_de_passe": "gAAAAABpWWZTj-ek2W1VSBQ6PfolV2ZG0u8PtB2SUbk82YyP5XixHEInVbDcHgyAP12hxbW8aPRnvmn06EkPvkVdUi5dZt6PJQ==",
+        "logo": "https://www.google.com/s2/favicons?domain=share.streamlit.io"
+    }
+]
