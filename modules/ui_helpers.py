@@ -3,208 +3,252 @@ from modules import storage, security
 import pandas as pd
 from urllib.parse import urlparse
 
+# =====================================================
+# Utils
+# =====================================================
 def normaliser_site(site: str) -> str:
     site = site.strip()
     if site.startswith("http"):
         parsed = urlparse(site)
         domaine = parsed.netloc
-        if domaine.startswith("www."):
-            domaine = domaine[4:]
-        if domaine.startswith("web."):
-            domaine = domaine[4:]
+        for prefix in ["www.", "web."]:
+            if domaine.startswith(prefix):
+                domaine = domaine[len(prefix):]
         return domaine
     return site
 
+
+def get_logo(compte):
+    """Retourne toujours un logo (évite KeyError)"""
+    return compte.get(
+        "logo",
+        f"https://www.google.com/s2/favicons?domain={compte['site']}"
+    )
+
+
+# =====================================================
+# Formulaire ajout
+# =====================================================
 def formulaire_ajout(data):
     with st.form("ajout_compte"):
         site = st.text_input("Nom du site (ex: facebook.com ou https://facebook.com)")
         identifiant = st.text_input("Identifiant")
         mot_de_passe = st.text_input("Mot de passe", type="password")
-        submit = st.form_submit_button("Ajouter")
+
+        submit = st.form_submit_button("➕ Ajouter")
+
         if submit:
             if site and identifiant and mot_de_passe:
                 domaine = normaliser_site(site)
-                logo_url = f"https://www.google.com/s2/favicons?domain={domaine}"
+
                 data.append({
                     "site": domaine,
                     "identifiant": identifiant,
                     "mot_de_passe": security.chiffrer(mot_de_passe),
-                    "logo": logo_url
+                    "logo": f"https://www.google.com/s2/favicons?domain={domaine}"
                 })
+
                 storage.sauvegarder_donnees(data)
-                st.success(f"Compte pour {domaine} ajouté ✅")
+                st.success(f"Compte **{domaine}** ajouté avec succès ✅")
+                st.rerun()
             else:
-                st.warning("Veuillez remplir tous les champs avant de valider.")
+                st.warning("Veuillez remplir tous les champs.")
 
-def afficher_comptes(data):
-    """Affiche les comptes avec un petit bouton œil compact pour chaque mot de passe."""
-    if data:
-        for i, compte in enumerate(data):
-            site = compte["site"]
-            logo = compte.get("logo", "")
-            identifiant = compte["identifiant"]
 
-            key = f"show_pwd_{i}"
-            if key not in st.session_state:
-                st.session_state[key] = False
-
-            if st.session_state[key]:
-                mot_de_passe = security.dechiffrer(compte["mot_de_passe"])
-                eye_icon = "🙈"
-            else:
-                mot_de_passe = "********"
-                eye_icon = "👁️"
-
-            cols = st.columns([2, 2, 2, 0.2])
-            with cols[0]:
-                st.markdown(
-                    f"<img src='{logo}' width='20' style='vertical-align:middle;margin-right:8px;'> "
-                    f"<a href='https://{site}' target='_blank' style='text-decoration:none;color:#1a73e8;'>{site}</a>",
-                    unsafe_allow_html=True
-                )
-            with cols[1]:
-                st.write(identifiant)
-            with cols[2]:
-                st.write(mot_de_passe)
-            with cols[3]:
-                if st.button(eye_icon, key=f"btn_{i}"):
-                    st.session_state[key] = not st.session_state[key]
-                    st.rerun()
-    else:
-        st.info("Aucun compte enregistré pour le moment.")
-
+# =====================================================
+# Recherche
+# =====================================================
 def rechercher_compte(data):
-    """Recherche un compte par site et affiche le résultat avec bouton œil compact."""
-    site_recherche = st.text_input("Nom du site à rechercher")
+    site_recherche = st.text_input("🔎 Rechercher un site")
+
     if site_recherche:
         domaine = normaliser_site(site_recherche)
-        resultats = []
-        for i, compte in enumerate(data):
-            if compte["site"].lower() == domaine.lower():
-                key = f"show_search_pwd_{i}"
-                if key not in st.session_state:
-                    st.session_state[key] = False
 
-                if st.session_state[key]:
-                    mot_de_passe = security.dechiffrer(compte["mot_de_passe"])
-                    eye_icon = "🙈"
-                else:
-                    mot_de_passe = "********"
-                    eye_icon = "👁️"
+        resultats = [
+            compte for compte in data
+            if compte["site"].lower() == domaine.lower()
+        ]
 
-                site_affiche = (
-                    f"<img src='{compte.get('logo','')}' width='20' style='vertical-align:middle;margin-right:8px;'> "
-                    f"<a href='https://{compte['site']}' target='_blank' style='text-decoration:none;color:#1a73e8;'>{compte['site']}</a>"
-                )
-
-                cols = st.columns([2, 2, 2, 0.2])
-                with cols[0]:
-                    st.markdown(site_affiche, unsafe_allow_html=True)
-                with cols[1]:
-                    st.write(compte["identifiant"])
-                with cols[2]:
-                    st.write(mot_de_passe)
-                with cols[3]:
-                    if st.button(eye_icon, key=f"search_btn_{i}"):
-                        st.session_state[key] = not st.session_state[key]
-                        st.rerun()
-                resultats.append(compte)
         if not resultats:
-            st.warning("Aucun compte trouvé pour ce site.")
+            st.warning("Aucun compte trouvé.")
+            return
 
-def afficher_style_mobile(data):
-    """Affichage façon mobile : icône + domaine cliquable + identifiant + flèche."""
-    st.markdown("### 🔐 Vos comptes enregistrés")
+        for i, compte in enumerate(resultats):
+            afficher_ligne_compte(compte, i, prefix="search")
+
+
+# =====================================================
+# Liste desktop avec œil
+# =====================================================
+def afficher_comptes(data):
+    if not data:
+        st.info("Aucun compte enregistré.")
+        return
+
     for i, compte in enumerate(data):
-        site = compte["site"]
-        identifiant = compte["identifiant"]
-        logo = compte.get("logo", "")
-        url = f"https://{site}"
+        afficher_ligne_compte(compte, i)
+
+
+def afficher_ligne_compte(compte, index, prefix="main"):
+    key = f"{prefix}_show_pwd_{index}"
+    if key not in st.session_state:
+        st.session_state[key] = False
+
+    mot_de_passe = (
+        security.dechiffrer(compte["mot_de_passe"])
+        if st.session_state[key]
+        else "********"
+    )
+    eye_icon = "🙈" if st.session_state[key] else "👁️"
+
+    logo = get_logo(compte)
+
+    cols = st.columns([2.5, 2, 2, 0.3])
+
+    with cols[0]:
+        st.markdown(
+            f"<img src='{logo}' width='20' style='vertical-align:middle;margin-right:8px;'> "
+            f"<a href='https://{compte['site']}' target='_blank' "
+            f"style='text-decoration:none;color:#1a73e8;'>"
+            f"{compte['site']}</a>",
+            unsafe_allow_html=True
+        )
+
+    with cols[1]:
+        st.write(compte["identifiant"])
+
+    with cols[2]:
+        st.write(mot_de_passe)
+
+    with cols[3]:
+        if st.button(eye_icon, key=f"{prefix}_btn_{index}"):
+            st.session_state[key] = not st.session_state[key]
+            st.rerun()
+
+
+# =====================================================
+# 🔥 Affichage MOBILE (comme l’image)
+# =====================================================
+def afficher_style_mobile(data):
+    st.markdown("### 🔐 Vos comptes")
+
+    st.markdown("""
+    <style>
+    .account-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s ease;
+    }
+    .account-row:hover {
+        background-color: #f7f9fc;
+    }
+    .account-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .account-site {
+        font-weight: 600;
+        color: #202124;
+    }
+    .account-sub {
+        font-size: 13px;
+        color: #5f6368;
+    }
+    .arrow {
+        font-size: 18px;
+        color: #5f6368;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    if not data:
+        st.info("Aucun compte enregistré.")
+        return
+
+    for compte in data:
+        logo = get_logo(compte)
 
         st.markdown(f"""
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid #eee;">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <img src="{logo}" width="20" style="vertical-align:middle;">
-                <div>
-                    <a href="{url}" target="_blank" style="text-decoration:none;color:#1a73e8;font-weight:600;">{site}</a><br>
-                    <span style="font-size:13px;color:#555;">{identifiant}</span>
+        <a href="https://{compte['site']}" target="_blank" style="text-decoration:none;">
+            <div class="account-row">
+                <div class="account-left">
+                    <img src="{logo}" width="22">
+                    <div>
+                        <div class="account-site">{compte['site']}</div>
+                        <div class="account-sub">{compte['identifiant']}</div>
+                    </div>
                 </div>
+                <div class="arrow">▶</div>
             </div>
-            <div>
-                <span style="font-size:18px;">➡️</span>
-            </div>
-        </div>
+        </a>
         """, unsafe_allow_html=True)
 
+
+# =====================================================
+# Suppression (par site OU identifiant)
+# =====================================================
 def supprimer_compte(data):
-    site_supprimer = st.text_input("Nom du site à supprimer")
+    st.markdown("### ❌ Supprimer un compte")
+
+    site_supprimer = st.text_input("Nom du site à supprimer (optionnel)")
+    identifiant_supprimer = st.text_input("Identifiant à supprimer (optionnel)")
+
     if st.button("Supprimer"):
-        domaine = normaliser_site(site_supprimer)
-        nouveaux_comptes = [c for c in data if c["site"].lower() != domaine.lower()]
-        if len(nouveaux_comptes) < len(data):
-            storage.sauvegarder_donnees(nouveaux_comptes)
-            st.success(f"Compte {domaine} supprimé ❌")
+        domaine = normaliser_site(site_supprimer) if site_supprimer else None
+
+        nouveaux = []
+        supprimes = []
+
+        for c in data:
+            condition_site = domaine and c["site"].lower() == domaine.lower()
+            condition_identifiant = identifiant_supprimer and c["identifiant"].lower() == identifiant_supprimer.lower()
+
+            if condition_site or condition_identifiant:
+                supprimes.append(c)
+            else:
+                nouveaux.append(c)
+
+        if supprimes:
+            storage.sauvegarder_donnees(nouveaux)
+            for c in supprimes:
+                # ✅ Message clair avec site et identifiant
+                st.success(f"Le site **{c['site']}** avec l’identifiant **{c['identifiant']}** a été supprimé ✅")
             st.rerun()
         else:
-            st.warning("Aucun compte trouvé avec ce nom.")
-# --- Fin des helpers UI ---
+            st.warning("Aucun compte correspondant trouvé.")
+
+
+# =====================================================
+# Derniers comptes
+# =====================================================
 def afficher_derniers_comptes(data):
-    """Affiche les 5 derniers comptes ajoutés avec option pour afficher/masquer tous les mots de passe."""
-    if data:
-        st.subheader("📊 Derniers comptes ajoutés")
-        derniers = data[-5:] if len(data) > 5 else data
+    if not data:
+        st.info("Aucun compte enregistré.")
+        return
 
-        # --- état global pour afficher/masquer ---
-        if "show_home_pwds" not in st.session_state:
-            st.session_state["show_home_pwds"] = False
+    st.subheader("📊 Derniers comptes ajoutés")
+    derniers = data[-5:]
 
-        # bouton global
-        eye_icon = "🙈 Masquer tous" if st.session_state["show_home_pwds"] else "👁️ Afficher tous"
-        if st.button(eye_icon, key="toggle_home_pwds"):
-            st.session_state["show_home_pwds"] = not st.session_state["show_home_pwds"]
-            st.rerun()
+    if "show_home_pwds" not in st.session_state:
+        st.session_state["show_home_pwds"] = False
 
-        # construire le tableau
-        comptes_affiches = []
-        for compte in derniers:
-            mot_de_passe = (
-                security.dechiffrer(compte["mot_de_passe"])
-                if st.session_state["show_home_pwds"]
-                else "********"
-            )
-            comptes_affiches.append({
-                "Site": compte["site"],
-                "Identifiant": compte["identifiant"],
-                "Mot de passe": mot_de_passe
-            })
+    label = "🙈 Masquer" if st.session_state["show_home_pwds"] else "👁️ Afficher"
+    if st.button(label):
+        st.session_state["show_home_pwds"] = not st.session_state["show_home_pwds"]
+        st.rerun()
 
-        df = pd.DataFrame(comptes_affiches)
+    rows = []
+    for c in derniers:
+        rows.append({
+            "Site": c["site"],
+            "Identifiant": c["identifiant"],
+            "Mot de passe": security.dechiffrer(c["mot_de_passe"])
+            if st.session_state["show_home_pwds"]
+            else "********"
+        })
 
-        # --- Style du tableau ---
-        table_style = """
-        <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #1a73e8;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        </style>
-        """
-        st.markdown(table_style, unsafe_allow_html=True)
-        st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
-    else:
-        st.info("Aucun compte enregistré pour le moment.")
+    st.dataframe(pd.DataFrame(rows), use_container_width=True)

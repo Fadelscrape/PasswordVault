@@ -1,36 +1,8 @@
 [
     {
-        "site": "svsvs",
-        "identifiant": "",
-        "mot_de_passe": "gAAAAABpUHQSxd1NcLNqw0GZgq3BD0XQiUbNnnB3lMlI_Gwbj0wdV4zqyP46sNrajGlmtdPDnB6rTc3FrRTATFs0A1SuSrFU-w=="
-    },
-    {
-        "site": "svsvs",
-        "identifiant": "eeee",
-        "mot_de_passe": "gAAAAABpUHQgZSNuXVtHfWTu3R-TL1GwxuBheMAye5I28SG88tSLb3s5j0iIufwBuNGx9xBPr_cztbeJDu5Jgfc_VamJ-lfrtw=="
-    },
-    {
-        "site": "https://passwordvault-ckp7efqmcblpkneyh57m7u.streamlit.app/",
-        "identifiant": "Fadel",
-        "mot_de_passe": "gAAAAABpUHnpoJlw0jORMYCvHbNRrURHleDp2cKG4w7X4cWw15S_uenwmf04AEVtGI9VTJl5hfXnERgR06MRW5kOhtfoXN4HDg==",
-        "logo": "https://www.google.com/s2/favicons?domain=https://passwordvault-ckp7efqmcblpkneyh57m7u.streamlit.app/"
-    },
-    {
-        "site": "https://web.facebook.com/",
-        "identifiant": "dd",
-        "mot_de_passe": "gAAAAABpUHotStRgDH9a3cBYsWy-06AJz66vmxKzAFm2rPMN3PMAeIVNKK0hfAv-vTyrWX8hY4yQSvWY-VZDRZuqcBWicVA9lQ==",
-        "logo": "https://www.google.com/s2/favicons?domain=https://web.facebook.com/"
-    },
-    {
         "site": "facebook.com",
-        "identifiant": "Fadel",
-        "mot_de_passe": "gAAAAABpUHrYTQv0-LLxzazGWKOF8r7T7FHc-jwD18RvBOuNkw_gZUNsujJYz4kvmBIeeihTCTyXeWCZWbK08Qcor8Pqd96nEQ==",
-        "logo": "https://www.google.com/s2/favicons?domain=facebook.com"
-    },
-    {
-        "site": "facebook.com",
-        "identifiant": "Junior",
-        "mot_de_passe": "gAAAAABpUHuWvOQlIiwfqVD-SqSxLZftWmLYAxhQsATWwIAqXq8D_e75PeORK1w4D9MeBxKpCI9X4GTpyURdGw529U9vMgTCCw==",
+        "identifiant": "1",
+        "mot_de_passe": "gAAAAABpWU0J0O9ggoU5lPtMGflI8JGO4WOAJYB10zEVb7yRfDL2S4DWkxY1TvaDJ_CsGg_q-In7zY0DkRZlEtTm4Fp-C-gBfw==",
         "logo": "https://www.google.com/s2/favicons?domain=facebook.com"
     }
 ]
