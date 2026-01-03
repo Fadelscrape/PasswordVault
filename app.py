@@ -42,7 +42,7 @@ custom_css = """
     font-weight: 700;
 }
 
-/* Responsive table for mobile */
+/* Responsive table + sidebar for mobile */
 @media (max-width: 768px) {
     table {
         font-size: 14px;
@@ -51,7 +51,9 @@ custom_css = """
         padding: 6px;
     }
     [data-testid="stSidebar"] {
-        display: none; /* cacher la sidebar sur mobile */
+        width: 160px;   /* réduire la largeur au lieu de cacher */
+        font-size: 13px;
+        padding: 1em 0.5em;
     }
 }
 </style>
@@ -74,20 +76,13 @@ if "message" in st.session_state:
     st.success(st.session_state["message"])
     del st.session_state["message"]
 
-# --- Sidebar navigation (desktop uniquement) ---
-if st.session_state.get("is_mobile", False) is False:
-    st.sidebar.title("🔐 PasswordVault")
-    st.sidebar.markdown("**Menu principal**")
-    menu = st.sidebar.radio(
-        "📂 Choisissez une page :",
-        ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"]
-    )
-else:
-    # Sur mobile, menu en haut
-    menu = st.selectbox(
-        "📂 Choisissez une page :",
-        ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"]
-    )
+# --- Sidebar navigation ---
+st.sidebar.title("🔐 PasswordVault")
+st.sidebar.markdown("**Menu principal**")
+menu = st.sidebar.radio(
+    "📂 Choisissez une page :",
+    ["Accueil", "Ajouter", "Lister", "Recherche", "Suppression", "Export"]
+)
 
 # --- Pages ---
 if menu == "Accueil":
@@ -124,36 +119,32 @@ if menu == "Accueil":
 
         df = pd.DataFrame(comptes_affiches)
 
-        # --- Desktop : tableau HTML ---
-        if not st.session_state.get("is_mobile", False):
-            table_style = """
-            <style>
-            table {
-                border-collapse: collapse;
-                width: 100%;
-            }
-            th, td {
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: left;
-            }
-            th {
-                background-color: #1a73e8;
-                color: white;
-            }
-            tr:nth-child(even) {
-                background-color: #f9f9f9;
-            }
-            tr:hover {
-                background-color: #f1f1f1;
-            }
-            </style>
-            """
-            st.markdown(table_style, unsafe_allow_html=True)
-            st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
-        else:
-            # --- Mobile : affichage style carte ---
-            ui_helpers.afficher_style_mobile(derniers)
+        # --- Tableau HTML ---
+        table_style = """
+        <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #1a73e8;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        </style>
+        """
+        st.markdown(table_style, unsafe_allow_html=True)
+        st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
     else:
         st.info("Aucun compte enregistré pour le moment.")
 
@@ -163,10 +154,7 @@ elif menu == "Ajouter":
 
 elif menu == "Lister":
     st.header("📋 Comptes enregistrés")
-    if st.session_state.get("is_mobile", False):
-        ui_helpers.afficher_style_mobile(data)
-    else:
-        ui_helpers.afficher_comptes(data)
+    ui_helpers.afficher_comptes(data)
 
 elif menu == "Recherche":
     st.header("🔎 Rechercher un compte")
@@ -175,7 +163,7 @@ elif menu == "Recherche":
 elif menu == "Suppression":
     st.header("🗑️ Supprimer un compte")
     ui_helpers.supprimer_compte(data)
-    ui_helpers.supprimer_tous_comptes(data)  # ✅ ajout du bouton "Supprimer tout"
+    ui_helpers.supprimer_tous_comptes(data)  # ✅ bouton "Supprimer tout"
 
 elif menu == "Export":
     st.header("📤 Exporter les données")

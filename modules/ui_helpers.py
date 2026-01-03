@@ -27,13 +27,33 @@ def get_logo(compte):
 
 
 # =====================================================
-# Formulaire ajout
+# Formulaire ajout (avec reset auto + message persistant)
 # =====================================================
 def formulaire_ajout(data):
+    # Initialiser les clés de formulaire si absentes
+    if "site_input" not in st.session_state:
+        st.session_state["site_input"] = ""
+    if "identifiant_input" not in st.session_state:
+        st.session_state["identifiant_input"] = ""
+    if "motdepasse_input" not in st.session_state:
+        st.session_state["motdepasse_input"] = ""
+    if "reset_form" not in st.session_state:
+        st.session_state["reset_form"] = False
+
+    # Réinitialiser les champs si demandé (après un ajout)
+    if st.session_state["reset_form"]:
+        st.session_state["site_input"] = ""
+        st.session_state["identifiant_input"] = ""
+        st.session_state["motdepasse_input"] = ""
+        st.session_state["reset_form"] = False
+
     with st.form("ajout_compte"):
-        site = st.text_input("Nom du site (ex: facebook.com ou https://facebook.com)")
-        identifiant = st.text_input("Identifiant")
-        mot_de_passe = st.text_input("Mot de passe", type="password")
+        site = st.text_input(
+            "Nom du site (ex: facebook.com ou https://facebook.com)",
+            key="site_input"
+        )
+        identifiant = st.text_input("Identifiant", key="identifiant_input")
+        mot_de_passe = st.text_input("Mot de passe", type="password", key="motdepasse_input")
 
         submit = st.form_submit_button("➕ Ajouter")
 
@@ -49,13 +69,14 @@ def formulaire_ajout(data):
                 })
 
                 storage.sauvegarder_donnees(data)
-                # ✅ Stocker le message dans session_state
+                # ✅ Stocker le message et demander le reset du formulaire
                 st.session_state["message"] = f"✅ Le site **{domaine}** avec l’identifiant **{identifiant}** a été ajouté avec succès."
+                st.session_state["reset_form"] = True
                 st.rerun()
             else:
                 st.warning("Veuillez remplir tous les champs.")
 
-    # ✅ Afficher le message si présent
+    # ✅ Afficher le message si présent (fallback local si app.py ne le gère pas)
     if "message" in st.session_state:
         st.success(st.session_state["message"])
         del st.session_state["message"]
@@ -195,7 +216,7 @@ def afficher_style_mobile(data):
 
 
 # =====================================================
-# Suppression (par site OU identifiant)
+# Suppression (par site OU identifiant) avec message persistant
 # =====================================================
 def supprimer_compte(data):
     site_supprimer = st.text_input("Nom du site à supprimer (optionnel)")
@@ -218,21 +239,21 @@ def supprimer_compte(data):
 
         if supprimes:
             storage.sauvegarder_donnees(nouveaux)
-            for c in supprimes:
-                # ✅ Stocker le message
-                st.session_state["message"] = f"✅ Le site **{c['site']}** avec l’identifiant **{c['identifiant']}** a été supprimé."
+            # Si plusieurs suppressions, on affiche le dernier message (ou concaténer si tu préfères)
+            dernier = supprimes[-1]
+            st.session_state["message"] = f"✅ Le site **{dernier['site']}** avec l’identifiant **{dernier['identifiant']}** a été supprimé."
             st.rerun()
         else:
             st.warning("Aucun compte correspondant trouvé.")
 
-    # ✅ Afficher le message si présent
+    # ✅ Afficher le message si présent (fallback local)
     if "message" in st.session_state:
         st.success(st.session_state["message"])
         del st.session_state["message"]
 
 
 # =====================================================
-# Suppression TOTALE
+# Suppression TOTALE avec message persistant
 # =====================================================
 def supprimer_tous_comptes(data):
     st.markdown("### ⚠️ Supprimer TOUS les comptes")
@@ -242,7 +263,7 @@ def supprimer_tous_comptes(data):
         st.session_state["message"] = "✅ Tous les comptes ont été supprimés."
         st.rerun()
 
-    # ✅ Afficher le message si présent
+    # ✅ Afficher le message si présent (fallback local)
     if "message" in st.session_state:
         st.success(st.session_state["message"])
         del st.session_state["message"]
