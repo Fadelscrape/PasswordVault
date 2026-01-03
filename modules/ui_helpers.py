@@ -49,11 +49,16 @@ def formulaire_ajout(data):
                 })
 
                 storage.sauvegarder_donnees(data)
-                # ✅ Confirmation explicite
-                st.success(f"✅ Le site **{domaine}** avec l’identifiant **{identifiant}** a été ajouté avec succès.")
+                # ✅ Stocker le message dans session_state
+                st.session_state["message"] = f"✅ Le site **{domaine}** avec l’identifiant **{identifiant}** a été ajouté avec succès."
                 st.rerun()
             else:
                 st.warning("Veuillez remplir tous les champs.")
+
+    # ✅ Afficher le message si présent
+    if "message" in st.session_state:
+        st.success(st.session_state["message"])
+        del st.session_state["message"]
 
 
 # =====================================================
@@ -214,11 +219,16 @@ def supprimer_compte(data):
         if supprimes:
             storage.sauvegarder_donnees(nouveaux)
             for c in supprimes:
-                # ✅ Confirmation explicite
-                st.success(f"✅ Le site **{c['site']}** avec l’identifiant **{c['identifiant']}** a été supprimé.")
+                # ✅ Stocker le message
+                st.session_state["message"] = f"✅ Le site **{c['site']}** avec l’identifiant **{c['identifiant']}** a été supprimé."
             st.rerun()
         else:
             st.warning("Aucun compte correspondant trouvé.")
+
+    # ✅ Afficher le message si présent
+    if "message" in st.session_state:
+        st.success(st.session_state["message"])
+        del st.session_state["message"]
 
 
 # =====================================================
@@ -229,8 +239,13 @@ def supprimer_tous_comptes(data):
 
     if st.button("🗑️ Supprimer tout"):
         storage.sauvegarder_donnees([])  # on vide la base
-        st.success("✅ Tous les comptes ont été supprimés.")
+        st.session_state["message"] = "✅ Tous les comptes ont été supprimés."
         st.rerun()
+
+    # ✅ Afficher le message si présent
+    if "message" in st.session_state:
+        st.success(st.session_state["message"])
+        del st.session_state["message"]
 
 
 # =====================================================

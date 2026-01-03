@@ -69,6 +69,11 @@ except Exception as e:
     st.error(f"Erreur lors du chargement des données : {e}")
     data = []
 
+# --- Afficher les messages de confirmation globaux ---
+if "message" in st.session_state:
+    st.success(st.session_state["message"])
+    del st.session_state["message"]
+
 # --- Sidebar navigation (desktop uniquement) ---
 if st.session_state.get("is_mobile", False) is False:
     st.sidebar.title("🔐 PasswordVault")
@@ -170,6 +175,7 @@ elif menu == "Recherche":
 elif menu == "Suppression":
     st.header("🗑️ Supprimer un compte")
     ui_helpers.supprimer_compte(data)
+    ui_helpers.supprimer_tous_comptes(data)  # ✅ ajout du bouton "Supprimer tout"
 
 elif menu == "Export":
     st.header("📤 Exporter les données")
